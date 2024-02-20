@@ -122,6 +122,17 @@ int main(void) {
   // USART3 configuration for PB10 (TX) and PB11 (RX)
   RCC->APB1ENR |= RCC_APB1ENR_USART3EN; // Enable USART3 clock
 
+  // Set the Baud rate to 115200 bits/second
+  uint32_t hclk_freq = HAL_RCC_GetHCLKFreq();
+  uint32_t baud_rate = 115200;
+  USART3->BRR = hclk_freq / baud_rate;
+
+  // Enable transmitter and receiver hardware
+  USART3->CR1 |= USART_CR1_TE | USART_CR1_RE;
+
+  // Enable USART peripheral
+  USART3->CR1 |= USART_CR1_UE;
+
   // Set PB10 and PB11 to alternate function mode
   GPIOB->MODER &= ~(GPIO_MODER_MODER10 | GPIO_MODER_MODER11);
   GPIOB->MODER |= (GPIO_MODER_MODER10_1 | GPIO_MODER_MODER11_1);
@@ -139,10 +150,20 @@ int main(void) {
     // Toggle red LED (PC6) with a delay of 400-600ms
     GPIOC->ODR ^= (1 << 6);
     HAL_Delay(500);
+
+    // Transmit a character (for example, 'A') using the USART
+    USART_TransmitChar('A');
   }
 }
 
+// Function to transmit a single character on USART3
+void USART_TransmitChar(char c) {
+  // Wait for the USART transmit data register to be empty
+  while (!(USART3->ISR & USART_ISR_TXE));
 
+  // Write the character into the transmit data register
+  USART3->TDR = (uint16_t)c;
+}
 
 /** System Clock Configuration
 */
