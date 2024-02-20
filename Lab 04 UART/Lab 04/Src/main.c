@@ -59,11 +59,6 @@ void _Error_Handler(char * file, int line);
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 
-// Function prototypes
-char USART_ReceiveChar(void);
-void USART_TransmitString(const char* str);
-void USART_TransmitChar(char c);
-
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
@@ -72,6 +67,15 @@ void USART_TransmitChar(char c);
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
+
+// Function prototypes
+char USART_ReceiveChar(void);
+void USART_TransmitString(const char* str);
+void USART_TransmitChar(char c);
+
+// Global variables for received data and flag
+volatile char receivedData;
+volatile uint8_t newDataFlag = 0;
 
 int main(void) {
   HAL_Init();               // Reset of all peripherals, init the Flash and Systick
@@ -151,53 +155,91 @@ int main(void) {
   GPIOC->ODR &= ~(1 << 9);   // Green Low
   GPIOC->ODR &= ~(1 << 8);  // Orange Low
 
-  // Flag to ensure the string is transmitted only once
-  uint8_t transmittedFlag = 0;
+  // ------------------------------------------------------------------------------------------
+  // 4.3 Interrupt-Based Reception
+  // ------------------------------------------------------------------------------------------
 
-  char receivedChar;
+  USART_Receive_Init();     // Initialize USART receive with interrupt
 
   while (1) {
-    // Wait for a character to be received
-    receivedChar = USART_ReceiveChar();
-
-    // Toggle the appropriate LED based on the received character
-    switch (receivedChar) {
-      case 'r':
-        // Toggle red LED
-        GPIOC->ODR ^= (1 << 6);
-        break;
-      case 'g':
-        // Toggle green LED
-        GPIOC->ODR ^= (1 << 9);
-        break;
-      case 'b':
-        // Toggle blue LED
-        GPIOC->ODR ^= (1 << 7);
-        break;
-      case 'o':
-        // Toggle orange LED
-        GPIOC->ODR ^= (1 << 8);
-        break;
-      default:
-        // Print an error message for unrecognized characters
-        USART_TransmitString("Error: Unrecognized command!\r\n");
-    }
+    
   }
 
+  // ------------------------------------------------------------------------------------------
+  // 4.2 Blocking Reception
+  // ------------------------------------------------------------------------------------------
+
+  // char receivedChar;
+
   // while (1) {
-    // // Toggle red LED (PC6) with a delay of 400-600ms
-    // GPIOC->ODR ^= (1 << 6);
-    // HAL_Delay(500);
+  //   // Wait for a character to be received
+  //   receivedChar = USART_ReceiveChar();
 
-    // // // Transmit a character (for example, 'A') using the USART
-    // // USART_TransmitChar('A');
-
-    // // Transmit the string using the USART only if not transmitted yet
-    // if (!transmittedFlag) {
-    //   USART_TransmitString("Hello, USART!");
-    //   transmittedFlag = 1; // Set the flag to indicate that the string has been transmitted
-    // }
+  //   // Toggle the appropriate LED based on the received character
+  //   switch (receivedChar) {
+  //     case 'r':
+  //       // Toggle red LED
+  //       GPIOC->ODR ^= (1 << 6);
+  //       break;
+  //     case 'g':
+  //       // Toggle green LED
+  //       GPIOC->ODR ^= (1 << 9);
+  //       break;
+  //     case 'b':
+  //       // Toggle blue LED
+  //       GPIOC->ODR ^= (1 << 7);
+  //       break;
+  //     case 'o':
+  //       // Toggle orange LED
+  //       GPIOC->ODR ^= (1 << 8);
+  //       break;
+  //     default:
+  //       // Print an error message for unrecognized characters
+  //       USART_TransmitString("Error: Unrecognized command!\r\n");
+  //   }
   // }
+
+  // ------------------------------------------------------------------------------------------
+  // This was for testing before the blocking portion
+  // ------------------------------------------------------------------------------------------
+
+  // // Flag to ensure the string is transmitted only once
+  // uint8_t transmittedFlag = 0;
+
+  // while (1) {
+  //   // Toggle red LED (PC6) with a delay of 400-600ms
+  //   GPIOC->ODR ^= (1 << 6);
+  //   HAL_Delay(500);
+
+  //   // // Transmit a character (for example, 'A') using the USART
+  //   // USART_TransmitChar('A');
+
+  //   // Transmit the string using the USART only if not transmitted yet
+  //   if (!transmittedFlag) {
+  //     USART_TransmitString("Hello, USART!");
+  //     transmittedFlag = 1; // Set the flag to indicate that the string has been transmitted
+  //   }
+  // }
+
+}
+
+// Function to initialize USART receive with interrupt
+void USART_Receive_Init(void) {
+  // Enable the USART receive register not empty interrupt
+  USART3->CR1 |= USART_CR1_RXNEIE;
+
+  // Enable and set the USART interrupt priority in the NVIC
+  NVIC_EnableIRQ(USART3_4_IRQn);
+  NVIC_SetPriority(USART3_4_IRQn, 0);
+}
+
+// USART interrupt handler (blank)
+void USART3_4_IRQHandler(void) {
+  // Save the receive register's value into the global variable
+  receivedData = (char)(USART3->RDR & 0xFF);
+
+  // Set a global variable as a flag indicating new data
+  newDataFlag = 1;
 }
 
 // Function to transmit a string on USART3
