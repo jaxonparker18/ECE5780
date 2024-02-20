@@ -162,7 +162,17 @@ int main(void) {
   USART_Receive_Init();     // Initialize USART receive with interrupt
 
   while (1) {
-    
+    // Print command prompt
+    USART_TransmitString("CMD? ");
+
+    // Wait for new data flag
+    while (!newDataFlag);
+
+    // Process the received command
+    processCommand(receivedData);
+
+    // Reset the flag
+    newDataFlag = 0;
   }
 
   // ------------------------------------------------------------------------------------------
@@ -221,6 +231,124 @@ int main(void) {
   //   }
   // }
 
+}
+
+// Function to process the received command
+void processCommand(char command) {
+  char color;
+  char action;
+
+  // Extract color and action from the command
+  color = command;
+  action = USART_ReceiveChar();
+
+  // Process the command
+  switch (action) {
+    case '0':
+      // Turn off the LED
+      turnOffLED(color);
+      break;
+    case '1':
+      // Turn on the LED
+      turnOnLED(color);
+      break;
+    case '2':
+      // Toggle the LED
+      toggleLED(color);
+      break;
+    default:
+      // Print an error message for unrecognized commands
+      USART_TransmitString("Error: Unrecognized command!\r\n");
+      break;
+  }
+}
+
+// Function to turn off the LED based on color
+void turnOffLED(char color) {
+  // Turn the appropriate LED based off the received character
+  switch (color) {
+    case 'r':
+      // Toggle red LED
+      GPIOC->ODR &= ~(1 << 6);
+      break;
+    case 'g':
+      // Toggle green LED
+      GPIOC->ODR &= ~(1 << 9);
+      break;
+    case 'b':
+      // Toggle blue LED
+      GPIOC->ODR &= ~(1 << 7);
+      break;
+    case 'o':
+      // Toggle orange LED
+      GPIOC->ODR &= ~(1 << 8);
+      break;
+    default:
+      // Print an error message for unrecognized characters
+      USART_TransmitString("Error: Unrecognized command!\r\n");
+  }
+  
+  // Print a message indicating the LED is turned off
+  USART_TransmitString("LED turned off\r\n");
+}
+
+// Function to turn on the LED based on color
+void turnOnLED(char color) {
+  // Turn the appropriate LED based on the received character
+  switch (color) {
+    case 'r':
+      // Toggle red LED
+      GPIOC->ODR |= (1 << 6);
+      break;
+    case 'g':
+      // Toggle green LED
+      GPIOC->ODR |= (1 << 9);
+      break;
+    case 'b':
+      // Toggle blue LED
+      GPIOC->ODR |= (1 << 7);
+      break;
+    case 'o':
+      // Toggle orange LED
+      GPIOC->ODR |= (1 << 8);
+      break;
+    default:
+      // Print an error message for unrecognized characters
+      USART_TransmitString("Error: Unrecognized command!\r\n");
+  }
+
+  // Print a message indicating the LED is turned on
+  USART_TransmitString("LED turned on\r\n");
+}
+
+// Function to toggle the LED based on color
+void toggleLED(char color) {
+  // Toggle the appropriate LED based on the received character
+  switch (color) {
+    case 'r':
+      // Toggle red LED
+      GPIOC->ODR ^= (1 << 6);
+      break;
+    case 'g':
+      // Toggle green LED
+      GPIOC->ODR ^= (1 << 9);
+      break;
+    case 'b':
+      // Toggle blue LED
+      GPIOC->ODR ^= (1 << 7);
+      break;
+    case 'o':
+      // Toggle orange LED
+      GPIOC->ODR ^= (1 << 8);
+      break;
+    default:
+      // Print an error message for unrecognized characters
+      USART_TransmitString("Error: Unrecognized command!\r\n");
+      return;  // Exit the function if an unrecognized command is received
+  }
+
+  // Print a message indicating the LED is toggled
+  USART_TransmitString("LED toggled\r\n");
 }
 
 // Function to initialize USART receive with interrupt
