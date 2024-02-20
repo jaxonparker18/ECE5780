@@ -59,6 +59,11 @@ void _Error_Handler(char * file, int line);
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 
+// Function prototypes
+char USART_ReceiveChar(void);
+void USART_TransmitString(const char* str);
+void USART_TransmitChar(char c);
+
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
@@ -143,35 +148,56 @@ int main(void) {
   // Initialize one pin logic high and the other to low
   GPIOC->ODR |= (1 << 7);   // Red High
   GPIOC->ODR &= ~(1 << 6);  // Blue Low
-  GPIOC->ODR |= (1 << 9);   // Green high
+  GPIOC->ODR &= ~(1 << 9);   // Green Low
   GPIOC->ODR &= ~(1 << 8);  // Orange Low
 
   // Flag to ensure the string is transmitted only once
   uint8_t transmittedFlag = 0;
 
+  char receivedChar;
+
   while (1) {
-    // Toggle red LED (PC6) with a delay of 400-600ms
-    GPIOC->ODR ^= (1 << 6);
-    HAL_Delay(500);
+    // Wait for a character to be received
+    receivedChar = USART_ReceiveChar();
 
-    // // Transmit a character (for example, 'A') using the USART
-    // USART_TransmitChar('A');
-
-    // Transmit the string using the USART only if not transmitted yet
-    if (!transmittedFlag) {
-      USART_TransmitString("Hello, USART!");
-      transmittedFlag = 1; // Set the flag to indicate that the string has been transmitted
+    // Toggle the appropriate LED based on the received character
+    switch (receivedChar) {
+      case 'r':
+        // Toggle red LED
+        GPIOC->ODR ^= (1 << 6);
+        break;
+      case 'g':
+        // Toggle green LED
+        GPIOC->ODR ^= (1 << 9);
+        break;
+      case 'b':
+        // Toggle blue LED
+        GPIOC->ODR ^= (1 << 7);
+        break;
+      case 'o':
+        // Toggle orange LED
+        GPIOC->ODR ^= (1 << 8);
+        break;
+      default:
+        // Print an error message for unrecognized characters
+        USART_TransmitString("Error: Unrecognized command!\r\n");
     }
   }
-}
 
-// Function to transmit a single character on USART3
-void USART_TransmitChar(char c) {
-  // Wait for the USART transmit data register to be empty
-  while (!(USART3->ISR & USART_ISR_TXE));
+  // while (1) {
+    // // Toggle red LED (PC6) with a delay of 400-600ms
+    // GPIOC->ODR ^= (1 << 6);
+    // HAL_Delay(500);
 
-  // Write the character into the transmit data register
-  USART3->TDR = (uint16_t)c;
+    // // // Transmit a character (for example, 'A') using the USART
+    // // USART_TransmitChar('A');
+
+    // // Transmit the string using the USART only if not transmitted yet
+    // if (!transmittedFlag) {
+    //   USART_TransmitString("Hello, USART!");
+    //   transmittedFlag = 1; // Set the flag to indicate that the string has been transmitted
+    // }
+  // }
 }
 
 // Function to transmit a string on USART3
@@ -184,6 +210,24 @@ void USART_TransmitString(const char* str) {
     // Move to the next character in the array
     str++;
   }
+}
+
+// Function to transmit a single character on USART3
+void USART_TransmitChar(char c) {
+  // Wait for the USART transmit data register to be empty
+  while (!(USART3->ISR & USART_ISR_TXE));
+
+  // Write the character into the transmit data register
+  USART3->TDR = (uint16_t)c;
+}
+
+// Function to receive a single character on USART3 (blocking)
+char USART_ReceiveChar(void) {
+  // Wait for the USART receive data register to not be empty
+  while (!(USART3->ISR & USART_ISR_RXNE));
+
+  // Read and return the received character
+  return (char)(USART3->RDR & 0xFF);
 }
 
 /** System Clock Configuration
