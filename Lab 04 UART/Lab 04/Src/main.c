@@ -146,13 +146,22 @@ int main(void) {
   GPIOC->ODR |= (1 << 9);   // Green high
   GPIOC->ODR &= ~(1 << 8);  // Orange Low
 
+  // Flag to ensure the string is transmitted only once
+  uint8_t transmittedFlag = 0;
+
   while (1) {
     // Toggle red LED (PC6) with a delay of 400-600ms
     GPIOC->ODR ^= (1 << 6);
     HAL_Delay(500);
 
-    // Transmit a character (for example, 'A') using the USART
-    USART_TransmitChar('A');
+    // // Transmit a character (for example, 'A') using the USART
+    // USART_TransmitChar('A');
+
+    // Transmit the string using the USART only if not transmitted yet
+    if (!transmittedFlag) {
+      USART_TransmitString("Hello, USART!");
+      transmittedFlag = 1; // Set the flag to indicate that the string has been transmitted
+    }
   }
 }
 
@@ -163,6 +172,18 @@ void USART_TransmitChar(char c) {
 
   // Write the character into the transmit data register
   USART3->TDR = (uint16_t)c;
+}
+
+// Function to transmit a string on USART3
+void USART_TransmitString(const char* str) {
+  // Loop over each character in the array
+  while (*str != '\0') {
+    // Transmit the current character
+    USART_TransmitChar(*str);
+    
+    // Move to the next character in the array
+    str++;
+  }
 }
 
 /** System Clock Configuration
