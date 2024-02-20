@@ -1,6 +1,6 @@
-# Jaxon Parker - ECE 5780 - U1289760
+# Jaxon Parker - U1289760 
 
-## University of Utah
+##  ECE 5780 - University of Utah 
 
 This repository contains the labs for the ECE 5780 course at the University of Utah.
 
