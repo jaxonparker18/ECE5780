@@ -155,9 +155,9 @@ int main(void) {
   GPIOC->ODR &= ~(1 << 9);   // Green Low
   GPIOC->ODR &= ~(1 << 8);  // Orange Low
 
-  // ------------------------------------------------------------------------------------------
-  // 4.3 Interrupt-Based Reception
-  // ------------------------------------------------------------------------------------------
+  // -------------------------------------------------------------------------------------------------------------------------------
+  // 4.3 Interrupt-Based Reception                            My Personal Terminal Prompt: screen /dev/tty.usbserial-A50285BI 115200
+  // -------------------------------------------------------------------------------------------------------------------------------
 
   USART_Receive_Init();     // Initialize USART receive with interrupt
 
@@ -175,9 +175,9 @@ int main(void) {
     newDataFlag = 0;
   }
 
-  // ------------------------------------------------------------------------------------------
-  // 4.2 Blocking Reception
-  // ------------------------------------------------------------------------------------------
+  // -------------------------------------------------------------------------------------------------------------------------------
+  // 4.2 Blocking Reception                                   My Personal Terminal Prompt: screen /dev/tty.usbserial-A50285BI 115200
+  // -------------------------------------------------------------------------------------------------------------------------------
 
   // char receivedChar;
 
@@ -209,9 +209,9 @@ int main(void) {
   //   }
   // }
 
-  // ------------------------------------------------------------------------------------------
-  // This was for testing before the blocking portion
-  // ------------------------------------------------------------------------------------------
+  // -------------------------------------------------------------------------------------------------------------------------------
+  // This was for testing before the blocking portion         My Personal Terminal Prompt: screen /dev/tty.usbserial-A50285BI 115200
+  // -------------------------------------------------------------------------------------------------------------------------------
 
   // // Flag to ensure the string is transmitted only once
   // uint8_t transmittedFlag = 0;
@@ -287,7 +287,7 @@ void turnOffLED(char color) {
       // Print an error message for unrecognized characters
       USART_TransmitString("Error: Unrecognized command!\r\n");
   }
-  
+
   // Print a message indicating the LED is turned off
   USART_TransmitString("LED turned off\r\n");
 }
