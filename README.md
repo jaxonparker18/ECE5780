@@ -8,7 +8,7 @@ This repository contains the labs for the ECE 5780 course at the University of U
 
 ### Lab 01: Intro/GPIO
 
-- Description: Timers, PWM and GPIO Alternate Functions
+- Description: The STM32F072 Discovery and Toolchain, Memory-Mapped Peripherals and the GPIO
 - Contains: Code and Postlab
 
 ### Lab 02: Interrupts
