@@ -18,7 +18,7 @@ This repository contains the labs for the ECE 5780 course at the University of U
 
 ### Lab 03: Timers
 
-- Description: Summarize the content and goals of the third lab, including any key components or skills covered.
+- Description: Timers, PWM and GPIO Alternate Functions
 - Contains: Code and Postlab
 
 ### Lab 04: UART
