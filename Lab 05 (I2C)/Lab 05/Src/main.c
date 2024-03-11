@@ -149,6 +149,16 @@ int main(void)
   GPIOC->ODR &= ~(1 << 9);    // Green Low
   GPIOC->ODR &= ~(1 << 8);    // Orange Low
 
+  // Enable I2C2 peripheral in the RCC
+  RCC->APB1ENR1 |= RCC_APB1ENR1_I2C2EN;
+
+  // Configure I2C2 parameters for 100 kHz standard-mode
+  uint32_t timingValue = (1 << 28) | (0x13 << 0) | (0xF << 8) | (0x2 << 16) | (0x4 << 20);
+  I2C2->TIMINGR = timingValue;
+
+  // Enable the I2C2 peripheral using the PE bit in the CR1 register
+  I2C2->CR1 |= I2C_CR1_PE;
+
   while (1)
   {
   }
