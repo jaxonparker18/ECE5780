@@ -73,7 +73,31 @@ int main(void)
   HAL_Init();               // Reset of all peripherals, init the Flash and Systick
   SystemClock_Config();     // Configure the system clock
 
-  RCC->AHBENR |= RCC_AHBENR_GPIOCEN; // Enable the GPIOC clock in the RCC
+  // Enable GPIOB and GPIOC clocks in the RCC
+  RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
+  RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+
+  // Configure PB11 as alternate function mode, open-drain output type, and select I2C2_SDA
+  GPIOB->MODER &= ~(3 << 22);   // Clear mode bits for PB11
+  GPIOB->MODER |= (2 << 22);    // Set PB11 to alternate function mode
+  GPIOB->OTYPER |= (1 << 11);   // Set PB11 to open-drain output type
+  GPIOB->AFR[1] |= (4 << 12);   // Select alternate function I2C2_SDA for PB11
+
+  // Configure PB13 as alternate function mode, open-drain output type, and select I2C2_SCL
+  GPIOB->MODER &= ~(3 << 26);   // Clear mode bits for PB13
+  GPIOB->MODER |= (2 << 26);    // Set PB13 to alternate function mode
+  GPIOB->OTYPER |= (1 << 13);   // Set PB13 to open-drain output type
+  GPIOB->AFR[1] |= (4 << 20);   // Select alternate function I2C2_SCL for PB13
+
+  // Configure PB14 as output mode, push-pull output type, and initialize/set the pin high
+  GPIOB->MODER |= (1 << 28);    // Set PB14 to output mode
+  GPIOB->OTYPER &= ~(1 << 14);  // Set PB14 to push-pull output type
+  GPIOB->BSRR |= (1 << 14);     // Set PB14 high initially
+
+  // Configure PC0 as output mode, push-pull output type, and initialize/set the pin high
+  GPIOC->MODER |= (1 << 0);     // Set PC0 to output mode
+  GPIOC->OTYPER &= ~(1 << 0);   // Set PC0 to push-pull output type
+  GPIOC->BSRR |= (1 << 0);      // Set PC0 high initially
 
   // Configure the LED pins to slow-speed, push-pull output mode without pull-up/down resistors
   // Blue LED (PC7)
@@ -120,10 +144,10 @@ int main(void)
   GPIOA->PUPDR |= (1 << 0);       // Enable pull-down resistor
 
   // Initialize one pin logic high and the other to low
-  GPIOC->ODR |= (1 << 7);   // Red High
-  GPIOC->ODR &= ~(1 << 6);  // Blue Low
-  GPIOC->ODR &= ~(1 << 9);   // Green Low
-  GPIOC->ODR &= ~(1 << 8);  // Orange Low
+  GPIOC->ODR |= (1 << 7);     // Red High
+  GPIOC->ODR &= ~(1 << 6);    // Blue Low
+  GPIOC->ODR &= ~(1 << 9);    // Green Low
+  GPIOC->ODR &= ~(1 << 8);    // Orange Low
 
   while (1)
   {
