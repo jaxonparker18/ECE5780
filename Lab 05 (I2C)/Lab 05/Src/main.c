@@ -1,7 +1,7 @@
 /**
   *
-  * Brandon Mouser
-  * U0962682
+  * Jaxon Parker
+  * U1289670
   *
   ******************************************************************************
   * File Name          : main.c
@@ -70,59 +70,63 @@ void SystemClock_Config(void);
 
 int main(void)
 {
-  SystemClock_Config();
+  HAL_Init();               // Reset of all peripherals, init the Flash and Systick
+  SystemClock_Config();     // Configure the system clock
 
-  RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
-  RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+  RCC->AHBENR |= RCC_AHBENR_GPIOCEN; // Enable the GPIOC clock in the RCC
 
-  uint32_t position = 0x00U;
-  uint32_t iocurrent = 0x00U;
-  uint32_t temp = 0x00U;
-
-  // Mode for PC6-PC9 and PA0
-  GPIOC->MODER &= ~(1 << 13);
-  GPIOC->MODER |= (1 << 12);
+  // Configure the LED pins to slow-speed, push-pull output mode without pull-up/down resistors
+  // Blue LED (PC7)
   GPIOC->MODER |= (1 << 14);
   GPIOC->MODER &= ~(1 << 15);
-  GPIOA->MODER &= ~(1 << 1);
-  GPIOA->MODER &= ~(1 << 0);
-
-
-  // Type for PC6-PC9 and PA0
-  GPIOC->OTYPER &= ~(1 << 6);
   GPIOC->OTYPER &= ~(1 << 7);
-
-  GPIOC->OSPEEDR &= ~(1 << 12);
-  GPIOC->OSPEEDR &= ~(1 << 13);
   GPIOC->OSPEEDR &= ~(1 << 14);
   GPIOC->OSPEEDR &= ~(1 << 15);
-  GPIOA->OSPEEDR &= ~(1 << 0);
-
-  GPIOC->PUPDR &= ~(1 << 12);
-  GPIOC->PUPDR &= ~(1 << 13);
   GPIOC->PUPDR &= ~(1 << 14);
   GPIOC->PUPDR &= ~(1 << 15);
-  GPIOA->PUPDR |= (1 << 1);
-  GPIOA->PUPDR &= ~(1 << 0);
 
-  GPIOC->ODR |= (1 << 6);
-  GPIOC->ODR &= ~(1<<7);
+  // Red LED (PC6)
+  GPIOC->MODER |= (1 << 12);
+  GPIOC->MODER &= ~(1 << 13);
+  GPIOC->OTYPER &= ~(1 << 6);
+  GPIOC->OSPEEDR &= ~(1 << 12);
+  GPIOC->OSPEEDR &= ~(1 << 13);
+  GPIOC->PUPDR &= ~(1 << 12); 
+  GPIOC->PUPDR &= ~(1 << 13); 
 
-  uint32_t debouncer  = 0;
+  // Green LED (PC9)
+  GPIOC->MODER |= (1 << 18);
+  GPIOC->MODER &= ~(1 << 19);
+  GPIOC->OTYPER &= ~(1 << 9);
+  GPIOC->OSPEEDR &= ~(1 << 18);
+  GPIOC->OSPEEDR &= ~(1 << 19);
+  GPIOC->PUPDR &= ~(1 << 18); 
+  GPIOC->PUPDR &= ~(1 << 19);
+
+  // Orange LED (PC8) 
+  GPIOC->MODER |= (1 << 16);
+  GPIOC->MODER &= ~(1 << 17);
+  GPIOC->OTYPER &= ~(1 << 8);
+  GPIOC->OSPEEDR &= ~(1 << 16);
+  GPIOC->OSPEEDR &= ~(1 << 17);
+  GPIOC->PUPDR &= ~(1 << 16); 
+  GPIOC->PUPDR &= ~(1 << 17);
+
+  // User Button
+  RCC->AHBENR |= RCC_AHBENR_GPIOAEN; 
+
+  GPIOA->MODER &= ~(3 << 0);      // Set as input
+  GPIOA->OSPEEDR &= ~(3 << 0);    // Set as low speed
+  GPIOA->PUPDR |= (1 << 0);       // Enable pull-down resistor
+
+  // Initialize one pin logic high and the other to low
+  GPIOC->ODR |= (1 << 7);   // Red High
+  GPIOC->ODR &= ~(1 << 6);  // Blue Low
+  GPIOC->ODR &= ~(1 << 9);   // Green Low
+  GPIOC->ODR &= ~(1 << 8);  // Orange Low
 
   while (1)
   {
-    debouncer = (debouncer  << 1);
-
-    if(GPIOA->IDR & 1){
-      debouncer |= 0x01;
-    }
-    if(debouncer == 0xFFFFFFFF){
-      if(GPIOA->IDR & 1){
-        HAL_Delay(100);
-        GPIOC->ODR ^= ((1 << 6) | (1<<7));
-      }
-    }
   }
 
 }
