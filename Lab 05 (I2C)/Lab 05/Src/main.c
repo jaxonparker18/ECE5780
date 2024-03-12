@@ -77,92 +77,160 @@ int main(void)
   RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
   RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
 
+  // Set up LEDs
+  GPIOC->MODER = 0x55000;
+  GPIOC->OTYPER = 0x00000000;
+  GPIOC->OSPEEDR = 0x00000000;
+  GPIOC->PUPDR = 0x00000000;
+
   // Configure PB11 as alternate function mode, open-drain output type, and select I2C2_SDA
-  GPIOB->MODER &= ~(3 << 22);   // Clear mode bits for PB11
-  GPIOB->MODER |= (2 << 22);    // Set PB11 to alternate function mode
+  // GPIOB->MODER &= ~(3 << 22);   // Clear mode bits for PB11
+  GPIOB->MODER |= (1 << 23);    // Set PB11 to alternate function mode
   GPIOB->OTYPER |= (1 << 11);   // Set PB11 to open-drain output type
   GPIOB->AFR[1] |= (4 << 12);   // Select alternate function I2C2_SDA for PB11
 
   // Configure PB13 as alternate function mode, open-drain output type, and select I2C2_SCL
-  GPIOB->MODER &= ~(3 << 26);   // Clear mode bits for PB13
-  GPIOB->MODER |= (2 << 26);    // Set PB13 to alternate function mode
+  // GPIOB->MODER &= ~(3 << 26);   // Clear mode bits for PB13
+  GPIOB->MODER |= (1 << 27);    // Set PB13 to alternate function mode
   GPIOB->OTYPER |= (1 << 13);   // Set PB13 to open-drain output type
-  GPIOB->AFR[1] |= (4 << 20);   // Select alternate function I2C2_SCL for PB13
+  GPIOB->AFR[1] |= (1 << 22);   // Select alternate function I2C2_SCL for PB13
+  GPIOB->AFR[1] |= (1 << 20);   // Select alternate function I2C2_SCL for PB13
 
   // Configure PB14 as output mode, push-pull output type, and initialize/set the pin high
   GPIOB->MODER |= (1 << 28);    // Set PB14 to output mode
-  GPIOB->OTYPER &= ~(1 << 14);  // Set PB14 to push-pull output type
+  // GPIOB->OTYPER &= ~(1 << 14);  // Set PB14 to push-pull output type
   GPIOB->BSRR |= (1 << 14);     // Set PB14 high initially
 
   // Configure PC0 as output mode, push-pull output type, and initialize/set the pin high
-  GPIOC->MODER |= (1 << 0);     // Set PC0 to output mode
-  GPIOC->OTYPER &= ~(1 << 0);   // Set PC0 to push-pull output type
-  GPIOC->BSRR |= (1 << 0);      // Set PC0 high initially
-
-  // Configure the LED pins to slow-speed, push-pull output mode without pull-up/down resistors
-  // Blue LED (PC7)
-  GPIOC->MODER |= (1 << 14);
-  GPIOC->MODER &= ~(1 << 15);
-  GPIOC->OTYPER &= ~(1 << 7);
-  GPIOC->OSPEEDR &= ~(1 << 14);
-  GPIOC->OSPEEDR &= ~(1 << 15);
-  GPIOC->PUPDR &= ~(1 << 14);
-  GPIOC->PUPDR &= ~(1 << 15);
-
-  // Red LED (PC6)
-  GPIOC->MODER |= (1 << 12);
-  GPIOC->MODER &= ~(1 << 13);
-  GPIOC->OTYPER &= ~(1 << 6);
-  GPIOC->OSPEEDR &= ~(1 << 12);
-  GPIOC->OSPEEDR &= ~(1 << 13);
-  GPIOC->PUPDR &= ~(1 << 12); 
-  GPIOC->PUPDR &= ~(1 << 13); 
-
-  // Green LED (PC9)
-  GPIOC->MODER |= (1 << 18);
-  GPIOC->MODER &= ~(1 << 19);
-  GPIOC->OTYPER &= ~(1 << 9);
-  GPIOC->OSPEEDR &= ~(1 << 18);
-  GPIOC->OSPEEDR &= ~(1 << 19);
-  GPIOC->PUPDR &= ~(1 << 18); 
-  GPIOC->PUPDR &= ~(1 << 19);
-
-  // Orange LED (PC8) 
-  GPIOC->MODER |= (1 << 16);
-  GPIOC->MODER &= ~(1 << 17);
-  GPIOC->OTYPER &= ~(1 << 8);
-  GPIOC->OSPEEDR &= ~(1 << 16);
-  GPIOC->OSPEEDR &= ~(1 << 17);
-  GPIOC->PUPDR &= ~(1 << 16); 
-  GPIOC->PUPDR &= ~(1 << 17);
-
-  // User Button
-  RCC->AHBENR |= RCC_AHBENR_GPIOAEN; 
-
-  GPIOA->MODER &= ~(3 << 0);      // Set as input
-  GPIOA->OSPEEDR &= ~(3 << 0);    // Set as low speed
-  GPIOA->PUPDR |= (1 << 0);       // Enable pull-down resistor
-
-  // Initialize one pin logic high and the other to low
-  GPIOC->ODR |= (1 << 7);     // Red High
-  GPIOC->ODR &= ~(1 << 6);    // Blue Low
-  GPIOC->ODR &= ~(1 << 9);    // Green Low
-  GPIOC->ODR &= ~(1 << 8);    // Orange Low
+  GPIOC->MODER |= 1;     // Set PC0 to output mode
+  // GPIOC->OTYPER &= ~(1 << 0);   // Set PC0 to push-pull output type
+  GPIOC->ODR |= 1;      // Set PC0 high initially
 
   // Enable I2C2 peripheral in the RCC
-  RCC->APB1ENR1 |= RCC_APB1ENR1_I2C2EN;
+  RCC->APB1ENR |= RCC_APB1ENR_I2C2EN;
 
   // Configure I2C2 parameters for 100 kHz standard-mode
-  uint32_t timingValue = (1 << 28) | (0x13 << 0) | (0xF << 8) | (0x2 << 16) | (0x4 << 20);
+  uint32_t timingValue = (1 << 28) | (0x13 << 0) | (0xF << 8) | (0x2 << 16) | (0x4 << 20); // PRESC | SCLL | SCLH | SDADEL | SCLDEL 
   I2C2->TIMINGR = timingValue;
 
   // Enable the I2C2 peripheral using the PE bit in the CR1 register
   I2C2->CR1 |= I2C_CR1_PE;
 
-  while (1)
-  {
-  }
+ 
 
+  // 5.4 --------------------------------------
+
+  char failed = 'f';
+
+  while(1) 
+  {
+
+    // Set the transaction parameters in the CR2 register
+    // For write operation (sending register address)
+    I2C2->CR2 |= (0x69 << 1); // Set slave address
+    I2C2->CR2 |= (1 << 16); // Set number of bytes = 1
+    I2C2->CR2 &= ~(1 << 10); // Set write operation
+
+    // Set the START bit to begin the address frame
+    I2C2->CR2 |= I2C_CR2_START;
+
+    failed = 'f';
+
+    // Wait until either TXIS or NACKF flags are set
+    while(1) 
+    { 
+      // Checks if NACKF flag was set
+      if((I2C2->ISR & I2C_ISR_NACKF) == (1 << 4)) 
+      {
+        failed = 't';
+        break;
+      }
+      // Checks if TXIS flag was set
+      if((I2C2->ISR & I2C_ISR_TXIS) == (1 << 1)) 
+      {
+        break;
+      }
+    }
+
+    if(failed == 'f') 
+    {
+      // Write the address of the "WHO_AM_I" register into the I2C transmit register (TXDR)
+      I2C2->TXDR |= 0x0F;
+
+      // Wait until TC (Transfer Complete) flag is set
+      while ((I2C2->ISR & I2C_ISR_TC) != (1 << 6))
+      {
+        // Waiting for TC to be set
+      }
+
+      GPIOC->ODR |= (1 << 9); // green LED
+      HAL_Delay(3000);
+    }
+    // Check if NACKF flag is set (slave did not respond)
+    else 
+    {
+      GPIOC->ODR |= (1 << 6); // red LED
+    }
+
+    // Reload CR2 register with the same parameters but set RD_WRN for read operation
+    // I2C2->CR2 |= (0x69 << 1); // Set slave address
+    // I2C2->CR2 |= (1 << 16); // Set number of bytes = 1
+    I2C2->CR2 &= ~(1 << 10); // Set write operation
+    I2C2->CR2 |= I2C_CR2_START; // Set START bit
+
+    failed = 'f';
+
+    // Wait until either RXNE or NACKF flags are set
+    while(1) 
+    { 
+      // Checks if NACKF flag was set
+      if((I2C2->ISR & I2C_ISR_NACKF) == (1 << 4)) 
+      {
+        failed = 't';
+        break;
+      }
+      // Checks if RXNE flag was set
+      if((I2C2->ISR & I2C_ISR_RXNE) == (1 << 2)) 
+      {
+        break;
+      }
+    }
+    
+    if(failed == 'f') 
+    {
+      // Wait until TC (Transfer Complete) flag is set
+      while ((I2C2->ISR & I2C_ISR_TC) != (1 << 6))
+      {
+        // Waiting for TC to be set
+      }
+
+      // Check the contents of the RXDR register to see if it matches the expected value (0xD4)
+      if (I2C2->RXDR == 0xD3) // I2C2->RXDR == 0x69
+      {
+        GPIOC->ODR |= (1 << 7); // blue LED
+        // Transaction successful
+      }
+      else
+      {
+        GPIOC->ODR |= (1 << 8); // orange LED
+        // Transaction failed
+      }
+
+      HAL_Delay(3000);
+    }
+    // Check if NACKF flag is set (slave did not respond)
+    else 
+    {
+      GPIOC->ODR |= (1 << 6); // red LED
+    }
+
+    // Set the STOP bit in the CR2 register to release the I2C bus
+    I2C2->CR2 |= I2C_CR2_STOP;
+
+    GPIOC->ODR &= ~(1 << 7); // blue LED
+    GPIOC->ODR &= ~(1 << 9); // green LED
+    HAL_Delay(3000);
+  }
 }
 
 /** System Clock Configuration
