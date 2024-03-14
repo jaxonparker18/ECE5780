@@ -100,83 +100,119 @@ int main(void)
   // 5.4 Reading the Register
   // -------------------------------------------------------------------------------------------------------------------------------
 
-  // Set the transaction parameters in the CR2 register
-  // For write operation (sending register address)
-  I2C2->CR2 = (0x69 << 1) | (1 << 16);
+  // // Set the transaction parameters in the CR2 register
+  // // For write operation (sending register address)
+  // I2C2->CR2 = (0x69 << 1) | (1 << 16);
 
-  // Set the START bit to begin the address frame
-  I2C2->CR2 |= I2C_CR2_START;
+  // // Set the START bit to begin the address frame
+  // I2C2->CR2 |= I2C_CR2_START;
 
-  // Wait until either TXIS or NACKF flags are set
-  while (!(I2C2->ISR & (I2C_ISR_TXIS | I2C_ISR_NACKF)))
-  {
-    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
-    // Handle the error
-  }
+  // // Wait until either TXIS or NACKF flags are set
+  // while (!(I2C2->ISR & (I2C_ISR_TXIS | I2C_ISR_NACKF)))
+  // {
+  //   GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+  //   // Handle the error
+  // }
 
-  // Check if NACKF flag is set (slave did not respond)
-  if (I2C2->ISR & I2C_ISR_NACKF)
-  {
-    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
-    // Handle the error
-  }
+  // // Check if NACKF flag is set (slave did not respond)
+  // if (I2C2->ISR & I2C_ISR_NACKF)
+  // {
+  //   GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+  //   // Handle the error
+  // }
 
-  // Write the address of the "WHO_AM_I" register into the I2C transmit register (TXDR)
-  I2C2->TXDR |= 0x0F;
+  // // Write the address of the "WHO_AM_I" register into the I2C transmit register (TXDR)
+  // I2C2->TXDR |= 0x0F;
 
-  // Wait until TC (Transfer Complete) flag is set
-  while (!(I2C2->ISR & (I2C_ISR_TC | I2C_ISR_NACKF)))
-  {
-    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
-    // Handle the error
-  }
+  // // Wait until TC (Transfer Complete) flag is set
+  // while (!(I2C2->ISR & (I2C_ISR_TC | I2C_ISR_NACKF)))
+  // {
+  //   GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+  //   // Handle the error
+  // }
     
-  // Check if NACKF flag is set (slave did not respond)
-  if (I2C2->ISR & I2C_ISR_NACKF)
+  // // Check if NACKF flag is set (slave did not respond)
+  // if (I2C2->ISR & I2C_ISR_NACKF)
+  // {
+  //   GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+  //   // Handle the error
+  // }
+
+  // // Reload CR2 register with the same parameters but set RD_WRN for read operation
+  // I2C2->CR2 = (0x69 << 1) | (1 << 16) | I2C_CR2_RD_WRN | I2C_CR2_START;
+
+  // // Wait until either RXNE or NACKF flags are set
+  // while (!(I2C2->ISR & (I2C_ISR_RXNE | I2C_ISR_NACKF)))
+  // {
+  //   GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+  //   // Handle the error
+  // }
+
+  // // Check if NACKF flag is set (slave did not respond)
+  // if (I2C2->ISR & I2C_ISR_NACKF)
+  // {
+  //   GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+  //   // Handle the error
+  // }
+
+  // // Wait until TC (Transfer Complete) flag is set
+  // while (!(I2C2->ISR & (I2C_ISR_TC | I2C_ISR_NACKF)))
+  // {
+  //   GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+  //   // Handle the error
+  // }
+
+  // // Set the STOP bit in the CR2 register to release the I2C bus
+  // I2C2->CR2 |= I2C_CR2_STOP;
+
+  // // Check the contents of the RXDR register to see if it matches the expected value (0xD4)
+  // if (I2C2->RXDR != 0xD3) // I2C2->RXDR == 0x69
+  // {
+  //   GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+  //   // Handle the error
+  // }
+
+  // GPIOC->BSRR |= (1 << (22)); // Clear PC6 to turn off the red LED
+
+  // // Shows it made it through while and if statements
+  // GPIOC->BSRR |= (1 << 7); // Set PC7 to turn on the blue LED
+
+  // -------------------------------------------------------------------------------------------------------------------------------
+  // 5.5 Initializing the Gyroscope
+  // -------------------------------------------------------------------------------------------------------------------------------
+
+  // Keep all other bits in CTRL_REG1 register as 0
+  I2C2->TXDR = (1 << 0) | (1 << 1) | (1 << 7);
+
+  // Write ctrlReg1Value to the CTRL_REG1 register of the gyroscope
+  I2C2->CR2 = (0x69 << 1) | (1 << 16); // Addressing the gyroscope
+  I2C2->TXDR = 0x20; // Register address of CTRL_REG1
+
+  while (!(I2C2->ISR & (I2C_ISR_TXIS | I2C_ISR_NACKF))) 
   {
     GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
     // Handle the error
   }
 
-  // Reload CR2 register with the same parameters but set RD_WRN for read operation
-  I2C2->CR2 = (0x69 << 1) | (1 << 16) | I2C_CR2_RD_WRN | I2C_CR2_START;
-
-  // Wait until either RXNE or NACKF flags are set
-  while (!(I2C2->ISR & (I2C_ISR_RXNE | I2C_ISR_NACKF)))
+  if (I2C2->ISR & I2C_ISR_NACKF) 
   {
     GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
-    // Handle the error
+    // Handle NACK error
   }
 
-  // Check if NACKF flag is set (slave did not respond)
-  if (I2C2->ISR & I2C_ISR_NACKF)
-  {
-    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
-    // Handle the error
-  }
+  I2C2->TXDR = 0x0B; //bit pattern to set Xen and Yen
 
-  // Wait until TC (Transfer Complete) flag is set
   while (!(I2C2->ISR & (I2C_ISR_TC | I2C_ISR_NACKF)))
   {
     GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
     // Handle the error
   }
 
-  // Set the STOP bit in the CR2 register to release the I2C bus
-  I2C2->CR2 |= I2C_CR2_STOP;
-
-  // Check the contents of the RXDR register to see if it matches the expected value (0xD4)
-  if (I2C2->RXDR != 0xD3) // I2C2->RXDR == 0x69
+  if (I2C2->ISR & I2C_ISR_NACKF) 
   {
     GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
-    // Handle the error
+    // Handle NACK error
   }
-
-  GPIOC->BSRR |= (1 << (22)); // Clear PC6 to turn off the red LED
-
-  // Shows it made it through while and if statements
-  GPIOC->BSRR |= (1 << 7); // Set PC7 to turn on the blue LED
-
 }
 
 /** System Clock Configuration
