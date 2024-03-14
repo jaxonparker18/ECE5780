@@ -181,9 +181,6 @@ int main(void)
   // 5.5 Initializing the Gyroscope
   // -------------------------------------------------------------------------------------------------------------------------------
 
-  // Keep all other bits in CTRL_REG1 register as 0
-  I2C2->TXDR = (1 << 0) | (1 << 1) | (1 << 7);
-
   // Write ctrlReg1Value to the CTRL_REG1 register of the gyroscope
   I2C2->CR2 = (0x69 << 1) | (1 << 16); // Addressing the gyroscope
   I2C2->TXDR = 0x20; // Register address of CTRL_REG1
@@ -199,8 +196,9 @@ int main(void)
     GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
     // Handle NACK error
   }
-
-  I2C2->TXDR = 0x0B; //bit pattern to set Xen and Yen
+  
+  //bit pattern to turn on Xen, Yen, and PD/Noraml mode 
+  I2C2->TXDR = 0x0B; // 0x0B => 0000 1011
 
   while (!(I2C2->ISR & (I2C_ISR_TC | I2C_ISR_NACKF)))
   {
@@ -213,6 +211,105 @@ int main(void)
     GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
     // Handle NACK error
   }
+
+  // -------------------------------------------------------------------------------------------------------------------------------
+  // 5.6 Exercise Specifications
+  // -------------------------------------------------------------------------------------------------------------------------------
+
+  while (1) 
+  {
+    // Read X and Y axis data from gyroscope
+    int16_t xAxis, yAxis;
+    readGyroscopeData(&xAxis, &yAxis);
+    
+  }
+}
+
+// Function to read the X and Y axis data from the gyroscope
+void readGyroscopeData(int16_t *xAxis, int16_t *yAxis) 
+{
+  // Reload CR2 register with the same parameters but set RD_WRN for read operation
+  I2C2->CR2 = (0x69 << 1) | (1 << 16) | I2C_CR2_RD_WRN;
+
+  // Set the START bit to begin the address frame
+  I2C2->CR2 |= I2C_CR2_START;
+
+  // Wait until either RXNE or NACKF flags are set
+  while (!(I2C2->ISR & (I2C_ISR_RXNE | I2C_ISR_NACKF)))
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle the error
+  }
+
+  // Check if NACKF flag is set (slave did not respond)
+  if (I2C2->ISR & I2C_ISR_NACKF)
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle the error
+  }
+
+  // Read the X axis data (LSB)
+  uint8_t xLSB = I2C2->RXDR;
+
+  // Continue reading to trigger the next byte reception
+  while (!(I2C2->ISR & (I2C_ISR_RXNE | I2C_ISR_NACKF)))
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle the error
+  }
+
+  // Check if NACKF flag is set (slave did not respond)
+  if (I2C2->ISR & I2C_ISR_NACKF)
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle the error
+  }
+
+  // Read the X axis data (MSB)
+  uint8_t xMSB = I2C2->RXDR;
+
+  // Combine the MSB and LSB to get the X axis value
+  *xAxis = (int16_t)((xMSB << 8) | xLSB);
+
+  // Wait until either RXNE or NACKF flags are set
+  while (!(I2C2->ISR & (I2C_ISR_RXNE | I2C_ISR_NACKF)))
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle the error
+  }
+
+  // Check if NACKF flag is set (slave did not respond)
+  if (I2C2->ISR & I2C_ISR_NACKF)
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle the error
+  }
+
+  // Read the Y axis data (LSB)
+  uint8_t yLSB = I2C2->RXDR;
+
+  // Continue reading to trigger the next byte reception
+  while (!(I2C2->ISR & (I2C_ISR_RXNE | I2C_ISR_NACKF)))
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle the error
+  }
+
+  // Check if NACKF flag is set (slave did not respond)
+  if (I2C2->ISR & I2C_ISR_NACKF)
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle the error
+  }
+
+  // Read the Y axis data (MSB)
+  uint8_t yMSB = I2C2->RXDR;
+
+  // Combine the MSB and LSB to get the Y axis value
+  *yAxis = (int16_t)((yMSB << 8) | yLSB);
+
+  // Set the STOP bit in the CR2 register to release the I2C bus
+  I2C2->CR2 |= I2C_CR2_STOP;
 }
 
 /** System Clock Configuration
