@@ -25,3 +25,8 @@ This repository contains the labs for the ECE 5780 course at the University of U
 
 - Description: Embedded Communications and the USART
 - Contains: Code 
+
+### Lab 05: I2C
+- Description: The Inter-Integrated Circuit (I2C) Interface
+- Contains: Code and Postlab
+
