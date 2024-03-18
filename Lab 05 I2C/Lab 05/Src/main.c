@@ -58,6 +58,11 @@ void _Error_Handler(char * file, int line);
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void write(char val);
+char read();
+void stop();
+int16_t readXAxis();
+int16_t readYAxis();
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -181,8 +186,28 @@ int main(void)
   // 5.5 Initializing the Gyroscope
   // -------------------------------------------------------------------------------------------------------------------------------
 
+  write(0x20);
+
   // Write ctrlReg1Value to the CTRL_REG1 register of the gyroscope
-  I2C2->CR2 = (0x69 << 1) | (1 << 16); // Addressing the gyroscope
+  I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0)); // Clear SADD and NBYTES
+	I2C2->CR2 &= ~(1 << 10); 
+  I2C2->CR2 |= (0x69 << 1) | (2 << 16); // Addressing the gyroscope
+
+  // Set the START bit to begin the address frame
+  I2C2->CR2 |= I2C_CR2_START;
+
+  while (!(I2C2->ISR & (I2C_ISR_TXIS | I2C_ISR_NACKF))) 
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle the error
+  }
+  
+  if (I2C2->ISR & I2C_ISR_NACKF) 
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle NACK error
+  }
+
   I2C2->TXDR = 0x20; // Register address of CTRL_REG1
 
   while (!(I2C2->ISR & (I2C_ISR_TXIS | I2C_ISR_NACKF))) 
@@ -190,6 +215,7 @@ int main(void)
     GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
     // Handle the error
   }
+  
 
   if (I2C2->ISR & I2C_ISR_NACKF) 
   {
@@ -212,25 +238,109 @@ int main(void)
     // Handle NACK error
   }
 
+  // read CTRL_REG1 to make sure data is set correctly
+	write(0x20);
+	if (read() != 0x0b) {
+		GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED;
+	}
+
   // -------------------------------------------------------------------------------------------------------------------------------
   // 5.6 Exercise Specifications
   // -------------------------------------------------------------------------------------------------------------------------------
 
-  while (1) 
-  {
-    // Read X and Y axis data from gyroscope
-    int16_t xAxis, yAxis;
-    readGyroscopeData(&xAxis, &yAxis);
-    
-  }
+  // Clear all LEDs
+  GPIOC->BSRR |= (1 << (6 + 16)); // Clear PC6 to turn off the red LED
+  GPIOC->BSRR |= (1 << (7 + 16)); // Clear PC7 to turn off the blue LED
+  GPIOC->BSRR |= (1 << (8 + 16)); // Clear PC8 to turn off the orange LED
+  GPIOC->BSRR |= (1 << (9 + 16)); // Clear PC9 to turn off the green LED
+
+  int16_t xAxis = 0;
+	int16_t yAxis = 0;
+	const int16_t threshold = 0x01FF;
+
+  while (1) {
+		xAxis = readXAxis();
+		yAxis = readYAxis();
+		
+		if (xAxis > threshold) {
+			GPIOC->BSRR |= (1 << 6); // Set PC6 to turn on the red LED
+		}
+		else {
+			GPIOC->BSRR |= (1 << (6 + 16)); // Clear PC6 to turn off the red LED
+		}
+		
+		if (yAxis < 0 - threshold) {
+			GPIOC->BSRR |= (1 << 7); // Set PC7 to turn on the blue LED
+		}
+		else {
+			GPIOC->BSRR |= (1 << (7 + 16)); // Clear PC7 to turn off the blue LED
+		}
+		
+		if (xAxis < 0 - threshold) {
+			GPIOC->BSRR |= (1 << 8); // Set PC8 to turn on the orange LED
+		}
+		else {
+			GPIOC->BSRR |= (1 << (8 + 16)); // Clear PC8 to turn off the orange LED
+		}
+		
+		if (yAxis > threshold) {
+			GPIOC->BSRR |= (1 << 9); // Set PC9 to turn on the green LED
+		}
+		else {
+			GPIOC->BSRR |= (1 << (9 + 16)); // Clear PC9 to turn off the green LED
+		}
+		
+		HAL_Delay(100);
+	}
+
 }
 
-// Function to read the X and Y axis data from the gyroscope
-void readGyroscopeData(int16_t *xAxis, int16_t *yAxis) 
-{
-  // Reload CR2 register with the same parameters but set RD_WRN for read operation
-  I2C2->CR2 = (0x69 << 1) | (1 << 16) | I2C_CR2_RD_WRN;
 
+void write(char val) {
+  // Set the transaction parameters in the CR2 register
+	I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0)); //clear SADD and NBYTES
+	// Set to write
+	I2C2->CR2 &= ~(1 << 10);
+	I2C2->CR2 |= (0x69 << 1) | (1 << 16);
+	
+  // Set the START bit to begin the address frame
+  I2C2->CR2 |= I2C_CR2_START;
+
+  while (!(I2C2->ISR & (I2C_ISR_TXIS | I2C_ISR_NACKF))) 
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle the error
+  }
+  
+  if (I2C2->ISR & I2C_ISR_NACKF) 
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle NACK error
+  }
+
+  // Set register of CTRL_REG1
+	I2C2->TXDR = val;
+	
+	while (!(I2C2->ISR & (I2C_ISR_TC | I2C_ISR_NACKF)))
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle the error
+  }
+
+  if (I2C2->ISR & I2C_ISR_NACKF) 
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle NACK error
+  }
+
+  return 0;
+}
+
+char read() {
+  // Reload CR2 register with the same parameters but set RD_WRN for read operation
+	I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
+	I2C2->CR2 = (0x69 << 1) | (1 << 16) | I2C_CR2_RD_WRN;
+	
   // Set the START bit to begin the address frame
   I2C2->CR2 |= I2C_CR2_START;
 
@@ -248,10 +358,43 @@ void readGyroscopeData(int16_t *xAxis, int16_t *yAxis)
     // Handle the error
   }
 
-  // Read the X axis data (LSB)
-  uint8_t xLSB = I2C2->RXDR;
+  char val = I2C2->RXDR;
 
-  // Continue reading to trigger the next byte reception
+  // Wait until TC (Transfer Complete) flag is set
+  while (!(I2C2->ISR & (I2C_ISR_TC | I2C_ISR_NACKF)))
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle the error
+  }
+
+  if (I2C2->ISR & I2C_ISR_NACKF) 
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle NACK error
+  }
+
+	return val;
+}
+
+void stop() {
+	I2C2->CR2 |= (1 << 14);	// STOP I2C2
+}
+
+int16_t readXAxis() {
+	
+  int16_t xAxis = 0;
+	write(0xA8);
+	stop();
+
+	I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
+	I2C2->CR2 = (0x69 << 1) | (2 << 16) | I2C_CR2_RD_WRN;
+	
+  // Set the START bit to begin the address frame
+  I2C2->CR2 |= I2C_CR2_START;
+
+  // wait for first 8-bit data
+
+  // Wait until either RXNE or NACKF flags are set
   while (!(I2C2->ISR & (I2C_ISR_RXNE | I2C_ISR_NACKF)))
   {
     GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
@@ -264,12 +407,10 @@ void readGyroscopeData(int16_t *xAxis, int16_t *yAxis)
     GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
     // Handle the error
   }
-
-  // Read the X axis data (MSB)
-  uint8_t xMSB = I2C2->RXDR;
-
-  // Combine the MSB and LSB to get the X axis value
-  *xAxis = (int16_t)((xMSB << 8) | xLSB);
+	
+	xAxis = I2C2->RXDR;
+	
+	// wait for second 8-bit data
 
   // Wait until either RXNE or NACKF flags are set
   while (!(I2C2->ISR & (I2C_ISR_RXNE | I2C_ISR_NACKF)))
@@ -285,10 +426,58 @@ void readGyroscopeData(int16_t *xAxis, int16_t *yAxis)
     // Handle the error
   }
 
-  // Read the Y axis data (LSB)
-  uint8_t yLSB = I2C2->RXDR;
+	xAxis |= (I2C2->RXDR << 8);
+	
+  // Wait until TC (Transfer Complete) flag is set
+  while (!(I2C2->ISR & (I2C_ISR_TC | I2C_ISR_NACKF)))
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle the error
+  }
 
-  // Continue reading to trigger the next byte reception
+  if (I2C2->ISR & I2C_ISR_NACKF) 
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle NACK error
+  }
+
+	return xAxis;
+}
+
+int16_t readYAxis() {
+	
+  int16_t yAxis = 0;
+	write(0xAA);
+	stop();
+
+	I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
+	I2C2->CR2 = (0x69 << 1) | (2 << 16) | I2C_CR2_RD_WRN;
+
+	// Set the START bit to begin the address frame
+  I2C2->CR2 |= I2C_CR2_START;
+	
+	// wait for first 8-bit data
+	
+  // Wait until either RXNE or NACKF flags are set
+  while (!(I2C2->ISR & (I2C_ISR_RXNE | I2C_ISR_NACKF)))
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle the error
+  }
+
+  // Check if NACKF flag is set (slave did not respond)
+  if (I2C2->ISR & I2C_ISR_NACKF)
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle the error
+  }
+	
+	yAxis = I2C2->RXDR;
+	
+	// wait for second 8-bit data
+
+
+  // Wait until either RXNE or NACKF flags are set
   while (!(I2C2->ISR & (I2C_ISR_RXNE | I2C_ISR_NACKF)))
   {
     GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
@@ -302,14 +491,22 @@ void readGyroscopeData(int16_t *xAxis, int16_t *yAxis)
     // Handle the error
   }
 
-  // Read the Y axis data (MSB)
-  uint8_t yMSB = I2C2->RXDR;
+	yAxis |= (I2C2->RXDR << 8);
+	
+  // Wait until TC (Transfer Complete) flag is set
+  while (!(I2C2->ISR & (I2C_ISR_TC | I2C_ISR_NACKF)))
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle the error
+  }
 
-  // Combine the MSB and LSB to get the Y axis value
-  *yAxis = (int16_t)((yMSB << 8) | yLSB);
+  if (I2C2->ISR & I2C_ISR_NACKF) 
+  {
+    GPIOC->BSRR |= (1 << 6); // Set PC6 high to turn on the red LED
+    // Handle NACK error
+  }
 
-  // Set the STOP bit in the CR2 register to release the I2C bus
-  I2C2->CR2 |= I2C_CR2_STOP;
+	return yAxis;
 }
 
 /** System Clock Configuration
