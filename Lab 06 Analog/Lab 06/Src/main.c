@@ -1,7 +1,7 @@
 /**
   *
-  * Brandon Mouser
-  * U0962682
+  * Jaxon Parker
+  * U1289670
   *
   ******************************************************************************
   * File Name          : main.c
@@ -72,58 +72,61 @@ int main(void)
 {
   SystemClock_Config();
 
-  RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+  // -------------------------------------------------------------------------------------------------------------------------------
+  // 6.1 Measuring a Potentiometer With the ADCx
+  // -------------------------------------------------------------------------------------------------------------------------------
+
+  // Initialize LED pins (PC6 and PC7) to output
   RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+  GPIOC->MODER |= GPIO_MODER_MODER6_0 | GPIO_MODER_MODER7_0 | GPIO_MODER_MODER8_0 | GPIO_MODER_MODER9_0;
 
-  uint32_t position = 0x00U;
-  uint32_t iocurrent = 0x00U;
-  uint32_t temp = 0x00U;
+  // Select PA0 as ADC input
+  RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+  GPIOA->MODER |= GPIO_MODER_MODER0;
 
-  // Mode for PC6-PC9 and PA0
-  GPIOC->MODER &= ~(1 << 13);
-  GPIOC->MODER |= (1 << 12);
-  GPIOC->MODER |= (1 << 14);
-  GPIOC->MODER &= ~(1 << 15);
-  GPIOA->MODER &= ~(1 << 1);
-  GPIOA->MODER &= ~(1 << 0);
+  // Enable ADC1 in RCC peripheral
+  RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
 
+  // Configure ADC to 8-bit resolution, continuous conversion mode, software trigger
+  ADC1->CFGR1 |= ADC_CFGR1_CONT; // Continuous conversion mode
+  ADC1->CFGR1 &= ~ADC_CFGR1_RES; // 8-bit resolution
 
-  // Type for PC6-PC9 and PA0
-  GPIOC->OTYPER &= ~(1 << 6);
-  GPIOC->OTYPER &= ~(1 << 7);
+  // Select PA0 as ADC input channel
+  ADC1->CHSELR |= ADC_CHSELR_CHSEL0;
 
-  GPIOC->OSPEEDR &= ~(1 << 12);
-  GPIOC->OSPEEDR &= ~(1 << 13);
-  GPIOC->OSPEEDR &= ~(1 << 14);
-  GPIOC->OSPEEDR &= ~(1 << 15);
-  GPIOA->OSPEEDR &= ~(1 << 0);
+  // Perform ADC calibration
+  ADC1->CR |= ADC_CR_ADCAL;
+  while (ADC1->CR & ADC_CR_ADCAL); // Wait for calibration to finish
 
-  GPIOC->PUPDR &= ~(1 << 12);
-  GPIOC->PUPDR &= ~(1 << 13);
-  GPIOC->PUPDR &= ~(1 << 14);
-  GPIOC->PUPDR &= ~(1 << 15);
-  GPIOA->PUPDR |= (1 << 1);
-  GPIOA->PUPDR &= ~(1 << 0);
+  // Enable ADC
+  ADC1->CR |= ADC_CR_ADEN;
+  while (!(ADC1->ISR & ADC_ISR_ADRDY)); // Wait for ADC to be ready
 
-  GPIOC->ODR |= (1 << 6);
-  GPIOC->ODR &= ~(1<<7);
+  // Start ADC conversion
+  ADC1->CR |= ADC_CR_ADSTART;
 
-  uint32_t debouncer  = 0;
+  // Threshold values for LED activation
+  uint16_t thresholds[] = {500, 1500, 3000, 4000}; // Values for a 20k potentiometer
 
-  while (1)
-  {
-    debouncer = (debouncer  << 1);
+  while (1) {
+    // Read ADC data register
+    uint16_t adc_value = ADC1->DR;
 
-    if(GPIOA->IDR & 1){
-      debouncer |= 0x01;
-    }
-    if(debouncer == 0xFFFFFFFF){
-      if(GPIOA->IDR & 1){
-        HAL_Delay(100);
-        GPIOC->ODR ^= ((1 << 6) | (1<<7));
+    // Adjust LEDs based on ADC value
+    for (int i = 0; i < 4; i++) {
+      if (adc_value >= thresholds[i]) {
+        GPIOC->BSRR = (1 << (6 + i)); // Turn on LED
+      } else {
+        GPIOC->BSRR = (1 << (22 + i)); // Turn off LED
       }
     }
   }
+
+  // -------------------------------------------------------------------------------------------------------------------------------
+  // 6.2 Generating Waveforms with the DAC
+  // -------------------------------------------------------------------------------------------------------------------------------
+
+
 
 }
 
