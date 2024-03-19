@@ -131,15 +131,24 @@ int main(void)
   GPIOA->MODER |= GPIO_MODER_MODER4;
 
   // Set PA4 to DAC output mode
-  GPIOA->MODER |= GPIO_MODER_MODER4_1;
+  // GPIOA->MODER |= GPIO_MODER_MODER4_1;
+  GPIOA->MODER |= (1<<8);
+  GPIOA->MODER |= (1<<9);
+
+  GPIOA->PUPDR  &= ~(1<<8);
+  GPIOA->PUPDR &= ~(1<<9);
 
   // Enable DAC channel 1
   RCC->APB1ENR |= RCC_APB1ENR_DACEN;
-  DAC->CR |= DAC_CR_EN1;
+  // DAC->CR |= DAC_CR_EN1;
+  DAC->CR |= (1<<0);
 
   // Set DAC channel 1 to software trigger mode
-  DAC->CR |= DAC_CR_TEN1;
-  DAC->CR &= ~DAC_CR_TSEL1;
+  // DAC->CR |= DAC_CR_TEN1;
+  // DAC->CR &= ~DAC_CR_TSEL1;
+  DAC->CR |= (1<<3);
+  DAC->CR |= (1<<4);
+  DAC->CR |= (1<<5);
 
   // Sine Wave: 8-bit, 32 samples/cycle
   const uint8_t sine_wave[32] = {127,151,175,197,216,232,244,251,254,251,244,
@@ -151,8 +160,12 @@ int main(void)
     // Write the next value from the wave-table to DAC channel 1 data register
     DAC->DHR8R1 = sine_wave[index];
 
-    // Increment index (wrap around if necessary)
-    index = (index + 1) % sizeof(sine_wave);
+    // Increment index 
+    index = (index + 1);
+    if(index == 32)
+    {
+      index = 0;
+    }
 
     // 1ms delay
     HAL_Delay(1);
