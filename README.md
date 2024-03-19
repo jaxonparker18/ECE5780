@@ -30,3 +30,6 @@ This repository contains the labs for the ECE 5780 course at the University of U
 - Description: The Inter-Integrated Circuit (I2C) Interface
 - Contains: Code and Postlab
 
+### Lab 06: Analog
+- Description: Analog Signals and the ADC/DAC
+- Contains: Code and Postlab
