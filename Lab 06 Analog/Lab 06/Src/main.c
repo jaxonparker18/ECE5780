@@ -76,57 +76,87 @@ int main(void)
   // 6.1 Measuring a Potentiometer With the ADCx
   // -------------------------------------------------------------------------------------------------------------------------------
 
-  // Initialize LED pins (PC6 and PC7) to output
-  RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
-  GPIOC->MODER |= GPIO_MODER_MODER6_0 | GPIO_MODER_MODER7_0 | GPIO_MODER_MODER8_0 | GPIO_MODER_MODER9_0;
+  // // Initialize LED pins (PC6 and PC7) to output
+  // RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+  // GPIOC->MODER |= GPIO_MODER_MODER6_0 | GPIO_MODER_MODER7_0 | GPIO_MODER_MODER8_0 | GPIO_MODER_MODER9_0;
 
-  // Select PA0 as ADC input
-  RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
-  GPIOA->MODER |= GPIO_MODER_MODER0;
+  // // Select PA0 as ADC input
+  // RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+  // GPIOA->MODER |= GPIO_MODER_MODER0;
 
-  // Enable ADC1 in RCC peripheral
-  RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
+  // // Enable ADC1 in RCC peripheral
+  // RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
 
-  // Configure ADC to 8-bit resolution, continuous conversion mode, software trigger
-  ADC1->CFGR1 |= ADC_CFGR1_CONT; // Continuous conversion mode
-  ADC1->CFGR1 &= ~ADC_CFGR1_RES; // 8-bit resolution
+  // // Configure ADC to 8-bit resolution, continuous conversion mode, software trigger
+  // ADC1->CFGR1 |= ADC_CFGR1_CONT; // Continuous conversion mode
+  // ADC1->CFGR1 &= ~ADC_CFGR1_RES; // 8-bit resolution
 
-  // Select PA0 as ADC input channel
-  ADC1->CHSELR |= ADC_CHSELR_CHSEL0;
+  // // Select PA0 as ADC input channel
+  // ADC1->CHSELR |= ADC_CHSELR_CHSEL0;
 
-  // Perform ADC calibration
-  ADC1->CR |= ADC_CR_ADCAL;
-  while (ADC1->CR & ADC_CR_ADCAL); // Wait for calibration to finish
+  // // Perform ADC calibration
+  // ADC1->CR |= ADC_CR_ADCAL;
+  // while (ADC1->CR & ADC_CR_ADCAL); // Wait for calibration to finish
 
-  // Enable ADC
-  ADC1->CR |= ADC_CR_ADEN;
-  while (!(ADC1->ISR & ADC_ISR_ADRDY)); // Wait for ADC to be ready
+  // // Enable ADC
+  // ADC1->CR |= ADC_CR_ADEN;
+  // while (!(ADC1->ISR & ADC_ISR_ADRDY)); // Wait for ADC to be ready
 
-  // Start ADC conversion
-  ADC1->CR |= ADC_CR_ADSTART;
+  // // Start ADC conversion
+  // ADC1->CR |= ADC_CR_ADSTART;
 
-  // Threshold values for LED activation
-  uint16_t thresholds[] = {500, 1500, 3000, 4000}; // Values for a 20k potentiometer
+  // // Threshold values for LED activation
+  // uint16_t thresholds[] = {500, 1500, 3000, 4000}; // Values for a 20k potentiometer
 
-  while (1) {
-    // Read ADC data register
-    uint16_t adc_value = ADC1->DR;
+  // while (1) {
+  //   // Read ADC data register
+  //   uint16_t adc_value = ADC1->DR;
 
-    // Adjust LEDs based on ADC value
-    for (int i = 0; i < 4; i++) {
-      if (adc_value >= thresholds[i]) {
-        GPIOC->BSRR = (1 << (6 + i)); // Turn on LED
-      } else {
-        GPIOC->BSRR = (1 << (22 + i)); // Turn off LED
-      }
-    }
-  }
+  //   // Adjust LEDs based on ADC value
+  //   for (int i = 0; i < 4; i++) {
+  //     if (adc_value >= thresholds[i]) {
+  //       GPIOC->BSRR = (1 << (6 + i)); // Turn on LED
+  //     } else {
+  //       GPIOC->BSRR = (1 << (22 + i)); // Turn off LED
+  //     }
+  //   }
+  // }
 
   // -------------------------------------------------------------------------------------------------------------------------------
   // 6.2 Generating Waveforms with the DAC
   // -------------------------------------------------------------------------------------------------------------------------------
 
+  // Select PA4 as DAC output
+  RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+  GPIOA->MODER |= GPIO_MODER_MODER4;
 
+  // Set PA4 to DAC output mode
+  GPIOA->MODER |= GPIO_MODER_MODER4_1;
+
+  // Enable DAC channel 1
+  RCC->APB1ENR |= RCC_APB1ENR_DACEN;
+  DAC->CR |= DAC_CR_EN1;
+
+  // Set DAC channel 1 to software trigger mode
+  DAC->CR |= DAC_CR_TEN1;
+  DAC->CR &= ~DAC_CR_TSEL1;
+
+  // Sine Wave: 8-bit, 32 samples/cycle
+  const uint8_t sine_wave[32] = {127,151,175,197,216,232,244,251,254,251,244,
+  232,216,197,175,151,127,102,78,56,37,21,9,2,0,2,9,21,37,56,78,102};
+
+  uint8_t index = 0;
+
+  while (1) {
+    // Write the next value from the wave-table to DAC channel 1 data register
+    DAC->DHR8R1 = sine_wave[index];
+
+    // Increment index (wrap around if necessary)
+    index = (index + 1) % sizeof(sine_wave);
+
+    // 1ms delay
+    HAL_Delay(1);
+  }
 
 }
 
