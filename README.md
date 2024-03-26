@@ -1,4 +1,4 @@
-# Jaxon Parker - U1289760 
+[Lab 7-PID Motor Controller.pdf](https://github.com/jaxonparker18/ECE5780/files/14761466/Lab.7-PID.Motor.Controller.pdf)# Jaxon Parker - U1289760 
 
 ##  ECE 5780 - University of Utah 
 
@@ -32,4 +32,8 @@ This repository contains the labs for the ECE 5780 course at the University of U
 
 ### Lab 06: Analog
 - Description: Analog Signals and the ADC/DAC
+- Contains: Code and Postlab
+
+### Lab 07: PID Motor Controller
+- Description: PID DC Motor Controller
 - Contains: Code and Postlab
