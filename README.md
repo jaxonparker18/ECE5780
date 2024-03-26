@@ -1,4 +1,4 @@
-[Lab 7-PID Motor Controller.pdf](https://github.com/jaxonparker18/ECE5780/files/14761466/Lab.7-PID.Motor.Controller.pdf)# Jaxon Parker - U1289760 
+# Jaxon Parker - U1289760 
 
 ##  ECE 5780 - University of Utah 
 
