@@ -143,41 +143,6 @@ void PI_update(void) {
     
     int32_t error_integral_max = 3200; // Maximum value for integral
     int32_t error_integral_min = 0;    // Minimum value for integral
-
-    // Calculate error signal
-    error = (target_rpm * 2) - motor_speed;
-
-    // Calculate integral portion of PI controller
-    error_integral = (error * Ki) + error_integral;
-
-    // Clamp the value of the integral to a limited positive range
-    if (error_integral > error_integral_max) {
-        error_integral = error_integral_max;
-    } else if (error_integral < error_integral_min) {
-        error_integral = error_integral_min;
-    }
-
-    // Calculate proportional portion and add integral
-    int32_t output = (Kp * error) + error_integral;
-
-    // Divide the output into the proper range for output adjustment
-    output /= 32; // Scale down output
-
-    // Clamp the output value between 0 and 100
-    if (output < 0) {
-        output = 0;
-    } else if (output > 100) {
-        output = 100;
-    }
-
-    // Set duty cycle using PWM
-    pwm_setDutyCycle((uint8_t)output);
-    duty_cycle = (uint8_t)output; // For debug viewing
-
-    // Read ADC value for current monitoring
-    if (ADC1->ISR & ADC_ISR_EOC) {
-        adc_value = ADC1->DR; // Read the motor current for debug viewing
-    }
     
     /* Run PI control loop
      *
@@ -195,8 +160,9 @@ void PI_update(void) {
      * adc_value -> raw ADC counts to report current
      *
      */
-    
-    /// TODO: calculate error signal and write to "error" variable
+
+    // Calculate error signal
+    error = (target_rpm * 2) - motor_speed;
     
     /* Hint: Remember that your calculated motor speed may not be directly in RPM!
      *       You will need to convert the target or encoder speeds to the same units.
@@ -204,10 +170,15 @@ void PI_update(void) {
      *       more resolution.
      */
     
-    
-    /// TODO: Calculate integral portion of PI controller, write to "error_integral" variable
-    
-    /// TODO: Clamp the value of the integral to a limited positive range
+    // Calculate integral portion of PI controller
+    error_integral = (error * duty_cycle) + error_integral;
+
+    // Clamp the value of the integral to a limited positive range
+    if (error_integral > error_integral_max) {
+        error_integral = error_integral_max;
+    } else if (error_integral < error_integral_min) {
+        error_integral = error_integral_min;
+    }
     
     /* Hint: The value clamp is needed to prevent excessive "windup" in the integral.
      *       You'll read more about this for the post-lab. The exact value is arbitrary
@@ -215,9 +186,8 @@ void PI_update(void) {
      *       Recommend that you clamp between 0 and 3200 (what is used in the lab solution)
      */
     
-    /// TODO: Calculate proportional portion, add integral and write to "output" variable
-    
-    // int16_t output = 0; // Change this!
+    // Calculate proportional portion and add integral
+    int32_t output = (Kp * error) + Ki + error_integral;
     
     /* Because the calculated values for the PI controller are significantly larger than 
      * the allowable range for duty cycle, you'll need to divide the result down into 
@@ -235,16 +205,23 @@ void PI_update(void) {
      * required for tuning.
      */
 
-     /// TODO: Divide the output into the proper range for output adjustment
-     
-     /// TODO: Clamp the output value between 0 and 100 
+    // Divide the output into the proper range for output adjustment
+    output >> 5; // Scale down output
+
+    // Clamp the output value between 0 and 100
+    if (output < 0) {
+        output = 0;
+    } else if (output > 100) {
+        output = 100;
+    }
     
-    // pwm_setDutyCycle(output);
-    // duty_cycle = output;            // For debug viewing
+    // Set duty cycle using PWM
+    pwm_setDutyCycle(output);
+    duty_cycle = output;            // For debug viewing
 
     // Read the ADC value for current monitoring, actual conversion into meaningful units 
     // will be performed by STMStudio
-    // if(ADC1->ISR & ADC_ISR_EOC) {   // If the ADC has new data for us
-    //     adc_value = ADC1->DR;       // Read the motor current for debug viewing
-    // }
+    if(ADC1->ISR & ADC_ISR_EOC) {   // If the ADC has new data for us
+        adc_value = ADC1->DR;       // Read the motor current for debug viewing
+    }
 }
