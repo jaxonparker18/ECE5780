@@ -206,7 +206,7 @@ void PI_update(void) {
      */
 
     // Divide the output into the proper range for output adjustment
-    output >> 5; // Scale down output
+    output = output >> 5; // Scale down output
 
     // Clamp the output value between 0 and 100
     if (output < 0) {
